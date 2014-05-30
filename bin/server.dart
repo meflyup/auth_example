@@ -6,6 +6,7 @@ import 'package:redstone/server.dart' as app;
 import 'package:crypto/crypto.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:di/di.dart';
+import 'package:shelf_static/shelf_static.dart';
 
 class DbConnManager {
 
@@ -31,14 +32,14 @@ createConn(DbConnManager connManager) {
     app.chain.next(() => connManager.close(dbConn));
   }).catchError((e) {
     app.chain.interrupt(statusCode: HttpStatus.INTERNAL_SERVER_ERROR, 
-        response: {"error": "DATABASE_UNAVAILABLE"});
+        responseValue: {"error": "DATABASE_UNAVAILABLE"});
   });
 }
 
 @app.Interceptor(r'/user/.+')
 authenticationFilter() {
   if (app.request.session["username"] == null) {
-    app.chain.interrupt(statusCode: HttpStatus.UNAUTHORIZED, response: {"error": "NOT_AUTHENTICATED"});
+    app.chain.interrupt(statusCode: HttpStatus.UNAUTHORIZED, responseValue: {"error": "NOT_AUTHENTICATED"});
   } else {
     app.chain.next();
   }
@@ -106,12 +107,15 @@ String encryptPassword(String pass) {
 main() {
 
   app.setupConsoleLog();
+  app.setShelfHandler(createStaticHandler("web", 
+                                          defaultDocument: "index.html", 
+                                          serveFilesOutsidePath: true));
 
   var dbUri = "mongodb://localhost/auth_example";
 
   app.addModule(new Module()
       ..bind(DbConnManager, toValue: new DbConnManager(dbUri)));
 
-  app.start(followLinks: true, jailRoot: false);
+  app.start();
 
 }
