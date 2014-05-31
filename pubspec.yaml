@@ -4,5 +4,6 @@ dependencies:
   browser: any
   redstone: '>=0.5.0 <1.0.0'
   mongo_dart: any
+  connection_pool: any
   crypto: any
   shelf_static: any

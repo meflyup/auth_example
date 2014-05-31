@@ -5,34 +5,39 @@ import 'dart:convert';
 import 'package:redstone/server.dart' as app;
 import 'package:crypto/crypto.dart';
 import 'package:mongo_dart/mongo_dart.dart';
+import 'package:connection_pool/connection_pool.dart';
 import 'package:di/di.dart';
 import 'package:shelf_static/shelf_static.dart';
 
-class DbConnManager {
+class MongoDbPool extends ConnectionPool<Db> {
 
   String uri;
 
-  DbConnManager(String this.uri);
+  MongoDbPool(String this.uri, int poolSize) : super(poolSize);
 
-  Future<Db> connect() {
-    Db conn = new Db(uri);
-    return conn.open().then((_) => conn);
-  }
-
-  void close(Db conn) {
+  @override
+  void closeConnection(Db conn) {
     conn.close();
   }
 
+  @override
+  Future<Db> openNewConnection() {
+    var conn = new Db(uri);
+    return conn.open().then((_) => conn);
+  }
 }
 
 @app.Interceptor(r'/services/.+')
-createConn(DbConnManager connManager) {
-  connManager.connect().then((Db dbConn) {
-    app.request.attributes['dbConn'] = dbConn;
-    app.chain.next(() => connManager.close(dbConn));
-  }).catchError((e) {
-    app.chain.interrupt(statusCode: HttpStatus.INTERNAL_SERVER_ERROR, 
-        responseValue: {"error": "DATABASE_UNAVAILABLE"});
+dbInterceptor(MongoDbPool pool) {
+  pool.getConnection().then((managedConnection) {
+    app.request.attributes["conn"] = managedConnection.conn;
+    app.chain.next(() {
+      if (app.chain.error is ConnectionException) {
+        pool.releaseConnection(managedConnection, markAsInvalid: true);
+      } else {
+        pool.releaseConnection(managedConnection);
+      }
+    });
   });
 }
 
@@ -46,8 +51,8 @@ authenticationFilter() {
 }
 
 @app.Route("/services/login", methods: const[app.POST])
-login(@app.Attr() Db dbConn, @app.Body(app.JSON) Map body) {
-  var userCollection = dbConn.collection("user");
+login(@app.Attr() Db conn, @app.Body(app.JSON) Map body) {
+  var userCollection = conn.collection("user");
   if (body["username"] == null || body["password"] == null) {
     return {"success": false, "error": "WRONG_USER_OR_PASSWORD"};
   }
@@ -76,14 +81,14 @@ logout() {
 }
 
 @app.Route("/services/newuser", methods: const[app.POST])
-addUser(@app.Attr() Db dbConn, @app.Body(app.JSON) Map json) {
+addUser(@app.Attr() Db conn, @app.Body(app.JSON) Map json) {
   
   String username = json["username"];
   String password = json["password"];
   
   username = username.trim();
   
-  var userCollection = dbConn.collection("user");
+  var userCollection = conn.collection("user");
   return userCollection.findOne({"username": username}).then((value) {
     if (value != null) {
       return {"success": false, "error": "USER_EXISTS"};
@@ -112,9 +117,10 @@ main() {
                                           serveFilesOutsidePath: true));
 
   var dbUri = "mongodb://localhost/auth_example";
+  var poolSize = 3;
 
   app.addModule(new Module()
-      ..bind(DbConnManager, toValue: new DbConnManager(dbUri)));
+      ..bind(MongoDbPool, toValue: new MongoDbPool(dbUri, poolSize)));
 
   app.start();
 

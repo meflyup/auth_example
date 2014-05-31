@@ -29,6 +29,10 @@ packages:
     description: collection
     source: hosted
     version: "0.9.3+1"
+  connection_pool:
+    description: connection_pool
+    source: hosted
+    version: "0.1.0+2"
   crypto:
     description: crypto
     source: hosted
