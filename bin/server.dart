@@ -28,7 +28,7 @@ class MongoDbPool extends ConnectionPool<Db> {
 }
 
 @app.Interceptor(r'/services/.+')
-dbInterceptor(MongoDbPool pool) {
+dbManager(MongoDbPool pool) {
   pool.getConnection().then((managedConnection) {
     app.request.attributes["conn"] = managedConnection.conn;
     app.chain.next(() {
@@ -41,7 +41,7 @@ dbInterceptor(MongoDbPool pool) {
   });
 }
 
-@app.Interceptor(r'/user/.+')
+@app.Interceptor(r'/services/private/.+')
 authenticationFilter() {
   if (app.request.session["username"] == null) {
     app.chain.interrupt(statusCode: HttpStatus.UNAUTHORIZED, responseValue: {"error": "NOT_AUTHENTICATED"});
@@ -108,6 +108,11 @@ String encryptPassword(String pass) {
   toEncrypt.add(UTF8.encode(pass));
   return CryptoUtils.bytesToHex(toEncrypt.close());
 }
+
+//private services
+
+@app.Route("/services/private/echo/:arg")
+echo(String arg) => arg;
 
 main() {
 

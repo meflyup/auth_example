@@ -11,6 +11,9 @@ void main() {
   InputElement newPassword = querySelector("#new_password");
   ButtonElement sendNewUserBtn = querySelector("#send_new_user");
   
+  InputElement echoInput = querySelector("#echo_input");
+  ButtonElement sendEchoBtn = querySelector("#send_echo");
+  
   ButtonElement sendLogoutBtn = querySelector("#logout");
   
   sendLoginBtn.onClick.listen((_) {
@@ -19,6 +22,10 @@ void main() {
   
   sendNewUserBtn.onClick.listen((_) {
     sendNewUser(newUsername.value, newPassword.value);
+  });
+  
+  sendEchoBtn.onClick.listen((_) {
+    sendEcho(echoInput.value);
   });
   
   sendLogoutBtn.onClick.listen((_) {
@@ -55,6 +62,19 @@ sendNewUser(String username, String password) {
       requestHeaders: {"content-type": "application/json"}, 
       sendData: JSON.encode(user)).then((request) {
     window.alert(request.response);
+  });
+}
+
+sendEcho(String input) {
+  if (input.trim().isEmpty || input.trim().isEmpty) {
+    return;
+  }
+  
+  HttpRequest.getString("/services/private/echo/$input").then((result) {
+    window.alert("received: $result");
+  }).catchError((ProgressEvent e) {
+    HttpRequest req = e.target;
+    window.alert("status: ${req.status} response: ${req.responseText}");
   });
 }
 
