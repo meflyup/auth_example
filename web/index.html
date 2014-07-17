@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>example</title>
+    <title>Redstone.dart - Authentication Example</title>
   </head>
  
   <body>   
@@ -15,6 +15,7 @@
     
     <div>
       <h1>Login</h1>
+      <p> Use this form to authenticate a user.</p>
       <div>
         <label for="#login_username">Username</label>
         <input type="text" id="login_username">
@@ -30,6 +31,7 @@
     
     <div>
       <h1>New User</h1>
+      <p>Use this form to register a user.</p>
       <div>
         <label for="#new_username">Username</label>
         <input type="text" id="new_username">
@@ -39,13 +41,16 @@
         <input type="password" id="new_password">
       </div>
       <div>
+        <input type="checkbox" id="new_user_admin"/> Admin
+      </div>
+      <div>
         <button id="send_new_user">Create User</button>
       </div>
     </div>
 
     <div>
       <h1>Echo service</h1>
-      <p>The echo service can be executed only by authenticated users. If your are not authenticated, the service will return a 401 status code</p>
+      <p>The echo service can be executed only by authenticated users. If your are not authenticated, the service will return a 401 status code.</p>
       <div>
         <input id="echo_input" type="text" placeholder="Write something here..."/>
         <button id="send_echo">Send</button>
@@ -53,7 +58,17 @@
     </div>
     
     <div>
+      <h1>Users service</h1>
+      <p>Only authenticated users with the "ADMIN" role can view the list of registered users. If your are not authenticated, the service will return a 401 status code. If you are authenticated but aren't an admin, the service will return a 403 status code.</p>
+      <div>
+        <button id="list_users">List Users</button>
+        <pre id="users_view"></pre>
+      </div>
+    </div>
+    
+    <div>
       <h1>Logout</h1>
+      <p>Destroy the current session.</p>
       <button id="logout">Logout</button>
     </div>
 
