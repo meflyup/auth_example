@@ -84,7 +84,7 @@ packages:
   redstone:
     description: redstone
     source: hosted
-    version: "0.5.7+2"
+    version: "0.5.8"
   route_hierarchical:
     description: route_hierarchical
     source: hosted

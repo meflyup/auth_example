@@ -2,7 +2,7 @@ name: auth_example
 description: A simple example on how to do authentication and authorization with Redstone.dart
 dependencies:
   browser: any
-  redstone: '>=0.5.0 <1.0.0'
+  redstone: '>=0.5.8 <0.6.0'
   mongo_dart: any
   connection_pool: any
   crypto: any
